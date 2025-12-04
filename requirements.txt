@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pypdf
+numpy
+scikit-learn
+pydantic

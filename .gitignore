@@ -1,0 +1,17 @@
+# entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+
+# pycache
+__pycache__/
+*.pyc
+
+# archivos generados
+*.pkl
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
