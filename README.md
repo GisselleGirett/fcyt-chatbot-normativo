@@ -1,32 +1,55 @@
+Perfecto.
 # Chatbot Normativo FCyT – Baseline 2025
 
-Este proyecto implementa un **chatbot normativo** para la Facultad de Ciencias y Tecnologías (FCyT – UNCA), que permite hacer consultas sobre distintos reglamentos y documentos institucionales a partir de un corpus de archivos PDF.
+Este proyecto implementa un **chatbot normativo** para la Facultad de Ciencias y Tecnologías (FCyT – UNCA), que permite realizar consultas sobre reglamentos y documentos institucionales a partir de archivos PDF.  
 
-La versión actual es un **baseline**: ya incluye extracción de texto, fragmentación, construcción de un índice TF-IDF, backend web con FastAPI e interfaz mínima en el navegador.  
-El objetivo en el examen / hackathon es **mejorar y extender** este baseline, no reconstruirlo desde cero.
+El objetivo de esta versión es proporcionar un **baseline funcional y extensible** para que los estudiantes puedan comprender la arquitectura, ejecutarla localmente y mejorarla en el marco del examen final o hackathon académico.
 
 ---
 
-## 1. Requisitos
+## 🧭 ¿Qué hace este sistema?
+
+El proyecto permite consultar documentos normativos de la FCyT utilizando preguntas en lenguaje natural. Para lograrlo, el sistema:
+
+1. **Carga todos los PDFs** ubicados en la carpeta `docs/`.
+2. **Extrae el texto** de cada documento.
+3. **Divide el contenido en fragmentos** (chunks) manejables.
+4. **Convierte cada fragmento en un vector numérico** mediante la técnica TF-IDF.
+5. **Construye un índice de búsqueda local**, sin depender de servicios externos.
+6. Cuando el usuario realiza una consulta:
+   - La pregunta se vectoriza.
+   - Se calcula la similitud entre la pregunta y cada fragmento del corpus.
+   - Se devuelven los fragmentos más relevantes, indicando el documento de origen.
+
+Este enfoque garantiza que el sistema:
+
+- **Nunca inventa información**,  
+- **Siempre responde con texto real proveniente de los documentos**,  
+- **Funciona completamente offline** una vez instalado,  
+- Y constituye una base sólida para futuras mejoras en búsqueda semántica, interfaces y asistentes inteligentes.
+
+---
+
+## 🧩 Requisitos
 
 ### ✔ Python 3.11 (recomendado)
 
-Descargar desde el sitio oficial:
+Descarga oficial:
 
-- Instalador directo Windows (64-bit):  
+- Windows 64-bit:  
   https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe
 
-- Página oficial de la versión:  
-  https://www.python.org/downloads/release/python-3119/
+Página oficial:  
+https://www.python.org/downloads/release/python-3119/
 
-> Asegúrese de marcar **“Add Python to PATH”** durante la instalación.
+> Importante: durante la instalación, marcar **“Add Python to PATH”**.
 
-### ✔ Conexión a internet
-Solo necesaria para la *primera* instalación de dependencias (`pip install`).
+### ✔ Conexión a internet  
+Solo necesaria para instalar dependencias la primera vez.
 
 ---
 
-## 2. Clonado del repositorio
+## 📥 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/hectorpyco/fcyt-chatbot-normativo.git
@@ -35,7 +58,7 @@ cd fcyt-chatbot-normativo
 
 ---
 
-## 3. Creación y activación del entorno virtual
+## 🐍 2. Crear y activar el entorno virtual
 
 ### Windows (PowerShell)
 
@@ -44,14 +67,14 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-> Si PowerShell bloquea la ejecución de scripts, usar:
->
-> ```powershell
-> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-> .\.venv\Scripts\Activate.ps1
-> ```
+Si aparece un error de permisos:
 
-### Linux / macOS (bash/zsh)
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+### Linux / macOS
 
 ```bash
 python3 -m venv .venv
@@ -60,168 +83,133 @@ source .venv/bin/activate
 
 ---
 
-## 4. Instalación de dependencias
-
-Con el entorno virtual activado:
+## 📦 3. Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Esto instalará:
+Esto instala:
 
-* `fastapi`
-* `uvicorn`
-* `pypdf`
-* `numpy`
-* `scikit-learn`
-* `pydantic`
+* fastapi
+* uvicorn
+* pypdf
+* numpy
+* scikit-learn
+* pydantic
 
 ---
 
-## 5. Estructura del proyecto
+## 📚 4. Estructura del proyecto
 
-```text
+```
 fcyt-chatbot-normativo/
-├─ app.py                # Backend FastAPI + interfaz web mínima
-├─ chatbot.py            # Versión modo consola (opcional)
-├─ procesar_pdfs.py      # Script para procesar PDFs y construir el índice TF-IDF
-├─ requirements.txt      # Dependencias del proyecto
-├─ docs/                 # Carpeta con los PDFs normativos (corpus)
+├─ app.py
+├─ chatbot.py
+├─ procesar_pdfs.py
+├─ requirements.txt
+├─ docs/                  # PDFs normativos
 └─ .gitignore
 ```
 
-La carpeta `docs/` contiene los PDFs digitales provistos (reglamentos, planes, ley, etc.).
-Solo se procesan PDFs **legibles** (con texto), no escaneados puros.
-
 ---
 
-## 6. Generación del índice (procesar los PDFs)
+## 🏗 5. Procesar los PDFs (generar el índice)
 
-Antes de usar el chatbot por primera vez, es necesario construir el índice TF-IDF a partir de los PDFs de `docs/`.
-
-Con el entorno virtual activado:
+Antes de hacer cualquier consulta, generar el índice TF-IDF:
 
 ```bash
 python procesar_pdfs.py
 ```
 
-Si todo sale bien, verás algo como:
+Esto produce un archivo:
 
-```text
-Buscando PDFs en la carpeta: docs
-
-Procesando PDF: ...
-Procesando PDF: ...
-
-Total de fragmentos: XXX
-
-Generando matriz TF-IDF...
-Dimensión del espacio vectorial: YYYY
-
-Guardando índice...
-
-✔ ¡Proceso completado!
-  - indice_tfidf.pkl generado
-Listo para usar con el chatbot.
+```
+indice_tfidf.pkl
 ```
 
-Esto genera el archivo:
+que contiene:
 
-* `indice_tfidf.pkl` → contiene:
+* fragmentos de texto,
+* vectorizador TF-IDF,
+* matriz de similitudes.
 
-  * los fragmentos de texto,
-  * el vectorizador TF-IDF entrenado,
-  * la matriz de embeddings TF-IDF.
-
-> Cada vez que se agreguen o cambien PDFs en `docs/`, se debe volver a ejecutar
-> `python procesar_pdfs.py` para regenerar el índice.
+> Cada vez que se agreguen o cambien PDFs en `docs/`, se debe ejecutar nuevamente este comando.
 
 ---
 
-## 7. Uso del chatbot en modo consola (opcional)
-
-Para probar la lógica de búsqueda sin interfaz web:
+## 💬 6. Uso del chatbot en modo consola
 
 ```bash
 python chatbot.py
 ```
 
-Verás:
+Ejemplo de diálogo:
 
-```text
-=== Chatbot normativo FCyT (modo consola) ===
-Escribe tu pregunta sobre reglamentos. Escribe 'salir' para terminar.
+```
+=== Chatbot normativo FCyT ===
+Pregunta: ¿Cuál es la función del docente de la materia PFG?
 ```
 
-Ejemplos de preguntas:
-
-* `¿Cuál es la función del docente de la materia PFG?`
-* `¿Cuál es el plazo máximo para concluir la carrera?`
-* `¿Qué establece el reglamento de investigación sobre los proyectos?`
-
-El programa devolverá los fragmentos más relevantes, indicando el PDF fuente y un score de similitud.
+El sistema devolverá los fragmentos más relevantes y el documento correspondiente.
 
 ---
 
-## 8. Uso del chatbot vía web (FastAPI + navegador)
+## 🌐 7. Servidor web con FastAPI
 
-Para levantar el servidor web:
+Levantar el servidor:
 
 ```bash
 uvicorn app:app --reload --port 8000
 ```
 
-Luego, abrir en el navegador:
+Abrir en el navegador:
 
-```text
+```
 http://127.0.0.1:8000/
 ```
 
 La interfaz permite:
 
-1. Escribir una pregunta en un cuadro de texto.
-2. Pulsar “Consultar”.
-3. Ver una lista de fragmentos relevantes con:
+* ingresar una pregunta,
+* enviarla al backend,
+* ver los fragmentos recuperados.
 
-   * nombre del documento,
-   * score de similitud,
-   * porción del texto encontrado.
-
-Para detener el servidor, usar `CTRL + C` en la terminal donde corre `uvicorn`.
+Para detener el servidor:
+`CTRL + C`
 
 ---
 
-## 9. Notas para el examen / hackathon
+## 🧪 8. Objetivo académico del baseline
 
-* Este repositorio constituye el **baseline oficial**:
-  ya están implementados el procesamiento de PDFs, el índice TF-IDF y la API `/ask`.
+Este proyecto sirve como punto de partida para que los estudiantes:
 
-* El trabajo de los equipos consistirá en:
-
-  * mejorar la relevancia de las respuestas,
-  * organizar mejor las normativas (por tipo de documento),
-  * mejorar la interfaz,
-  * y/o incorporar técnicas adicionales (embeddings, re-ranking, generación de respuestas, etc.).
-
-* No se espera que los estudiantes reescriban desde cero el pipeline básico, sino que **lo entiendan, lo usen y lo extiendan**.
+* comprendan los conceptos básicos de recuperación de información (IR),
+* experimenten con TF-IDF y búsqueda vectorial,
+* agreguen nuevos documentos normativos,
+* exploren técnicas más avanzadas de extracción,
+* mejoren la interfaz de usuario,
+* integren modelos locales o remotos para enriquecer las respuestas,
+* transformen el prototipo en una herramienta más inteligente y completa.
 
 ---
 
-## 10. Problemas frecuentes
+## 🛠 9. Problemas frecuentes y soluciones
 
-* **Error: índice no encontrado (`indice_tfidf.pkl`)**
-  → Ejecutar antes: `python procesar_pdfs.py`
+* **Error: `indice_tfidf.pkl` no encontrado**
+  → Ejecutar `python procesar_pdfs.py`.
 
-* **El servidor levanta, pero no hay resultados útiles**
-  → Verificar que `docs/` contiene PDFs legibles y que el índice se generó sin errores.
+* **El sistema no devuelve respuestas útiles**
+  → Verificar que los PDFs sean digitales y no escaneados.
+  → Regenerar el índice.
 
-* **No reconoce el comando `uvicorn`**
-  → Asegurarse de haber activado el entorno virtual y corrido `pip install -r requirements.txt`.
+* **`uvicorn` no se reconoce**
+  → El entorno virtual no está activado.
+  → Verificar instalación con `pip install -r requirements.txt`.
 
 ---
 
-Cualquier mejora o extensión debe respetar este flujo básico:
+## 📄 Licencia y uso académico
 
-> PDFs → extracción de texto → fragmentación → índice → API `/ask` → interfaz de usuario.
-
+Este proyecto está diseñado para fines educativos dentro de la FCyT – UNCA.
+Puede ser adaptado libremente durante el hackathon o en prácticas de laboratorio.
