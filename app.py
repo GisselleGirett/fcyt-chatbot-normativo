@@ -193,7 +193,9 @@ async def search_documents(request: QueryRequest):
     
     try:
         # Mantenemos top_k para obtener la lista, luego el frontend filtra
-        results = search_engine.search(request.query, top_k=request.top_k) 
+        #results = search_engine.search(request.query, top_k=request.top_k) 
+
+        results = search_engine.search(request.query, top_k=1)
         
         return [
             SearchResult(
