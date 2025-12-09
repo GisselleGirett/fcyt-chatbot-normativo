@@ -39,7 +39,7 @@ def load_search_engine():
             search_engine = SearchEngine.load(INDEX_FILE)
             print(f"✅ Índice cargado: {len(search_engine.chunks)} fragmentos")
         else:
-            print("⚠️  No se encontró índice. Ejecute: python procesar_pdfs.py")
+            print("⚠️  No se encontró índice. Ejecute: python procesar_pdfs.py")
             search_engine = None
     except Exception as e:
         print(f"❌ Error al cargar índice: {e}")
@@ -192,7 +192,8 @@ async def search_documents(request: QueryRequest):
         )
     
     try:
-        results = search_engine.search(request.query, top_k=request.top_k)
+        # Mantenemos top_k para obtener la lista, luego el frontend filtra
+        results = search_engine.search(request.query, top_k=request.top_k) 
         
         return [
             SearchResult(
@@ -395,7 +396,6 @@ async def root():
                     <div class="tab" onclick="switchTab('admin')">⚙️ Administración</div>
                 </div>
                 
-                <!-- PESTAÑA DE BÚSQUEDA -->
                 <div id="search" class="tab-content active">
                     <div class="search-box">
                         <input 
@@ -409,7 +409,6 @@ async def root():
                     <div id="results"></div>
                 </div>
                 
-                <!-- PESTAÑA DE ADMINISTRACIÓN -->
                 <div id="admin" class="tab-content">
                     <div class="admin-actions">
                         <input type="file" id="fileInput" accept=".pdf" style="display:none" onchange="uploadFile()">
@@ -430,6 +429,9 @@ async def root():
         </div>
         
         <script>
+            // Constante para el umbral de puntuación (10%)
+            const SCORE_THRESHOLD = 0.10; 
+            
             function switchTab(tabName) {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -456,14 +458,17 @@ async def root():
                         body: JSON.stringify({ query, top_k: 5 })
                     });
                     
-                    const results = await response.json();
+                    const rawResults = await response.json();
                     
-                    if (results.length === 0) {
-                        resultsDiv.innerHTML = '<div class="loading">No se encontraron resultados</div>';
+                    // Filtrar solo los resultados con un score mayor o igual al umbral
+                    const filteredResults = rawResults.filter(r => r.score >= SCORE_THRESHOLD);
+                    
+                    if (filteredResults.length === 0) {
+                        resultsDiv.innerHTML = '<div class="loading">No se encontraron resultados relevantes (score < 10%)</div>';
                         return;
                     }
                     
-                    resultsDiv.innerHTML = results.map(r => `
+                    resultsDiv.innerHTML = filteredResults.map(r => `
                         <div class="result">
                             <div class="result-meta">
                                 <span class="doc-name">📄 ${r.document}</span>
